@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Architecture Notes
+    url: https://github.com/JangChwiSa/api-gateway/blob/main/research.md
+    about: 구조나 설계 배경은 research.md를 먼저 확인해 주세요.
