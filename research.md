@@ -1,53 +1,53 @@
-# api-gateway 분석 보고서
+﻿# api-gateway 遺꾩꽍 蹂닿퀬??
 
-작성일: 2026-04-28
+?묒꽦?? 2026-04-28
 
-## 1. 개요
+## 1. 媛쒖슂
 
-이 문서는 `/Users/byeok27/Documents/GitHub/Didgo/api-gateway` 프로젝트만을 별도로 깊게 분석한 결과다.
+??臾몄꽌??`/Users/byeok27/Documents/GitHub/Didgo/api-gateway` ?꾨줈?앺듃留뚯쓣 蹂꾨룄濡?源딄쾶 遺꾩꽍??寃곌낵??
 
-분석 기준:
+遺꾩꽍 湲곗?:
 
-- 현재 로컬 코드
-- `plan.md`에 적힌 설계 의도
-- 최근 실제 검증 결과
+- ?꾩옱 濡쒖뺄 肄붾뱶
+- `plan.md`???곹엺 ?ㅺ퀎 ?섎룄
+- 理쒓렐 ?ㅼ젣 寃利?寃곌낵
 
-이 프로젝트의 핵심 역할은 외부 API 요청을 내부 서비스로 전달하기 전에 다음 책임을 선행하는 것이다.
+???꾨줈?앺듃???듭떖 ??븷? ?몃? API ?붿껌???대? ?쒕퉬?ㅻ줈 ?꾨떖?섍린 ?꾩뿉 ?ㅼ쓬 梨낆엫???좏뻾?섎뒗 寃껋씠??
 
-- JWT Access Token 검증
-- 공개/보호 API 구분
-- 내부 신뢰 헤더 재구성
-- CircuitBreaker와 fallback 적용
-- CORS 처리
-- 내부 서비스 직접 노출 차단 구조의 일부 구현
+- JWT Access Token 寃利?
+- 怨듦컻/蹂댄샇 API 援щ텇
+- ?대? ?좊ː ?ㅻ뜑 ?ш뎄??
+- CircuitBreaker? fallback ?곸슜
+- CORS 泥섎━
+- ?대? ?쒕퉬??吏곸젒 ?몄텧 李⑤떒 援ъ“???쇰? 援ы쁽
 
-즉, 이 프로젝트는 단순 프록시가 아니라 인증과 장애 완충을 담당하는 애플리케이션 게이트웨이다.
+利? ???꾨줈?앺듃???⑥닚 ?꾨줉?쒓? ?꾨땲???몄쬆怨??μ븷 ?꾩땐???대떦?섎뒗 ?좏뵆由ъ??댁뀡 寃뚯씠?몄썾?대떎.
 
-## 2. 현재 프로젝트 상태 요약
+## 2. ?꾩옱 ?꾨줈?앺듃 ?곹깭 ?붿빟
 
-현재 파일 수는 많지 않다. 실제 코드량도 작고, 1차 라우팅 대상을 `user-service` 하나로 제한한 최소 구현 상태다.
+?꾩옱 ?뚯씪 ?섎뒗 留롮? ?딅떎. ?ㅼ젣 肄붾뱶?됰룄 ?묎퀬, 1李??쇱슦????곸쓣 `user-service` ?섎굹濡??쒗븳??理쒖냼 援ы쁽 ?곹깭??
 
-핵심 파일:
+?듭떖 ?뚯씪:
 
-- `plan.md`: 설계 의도와 요구사항
-- `pom.xml`: Spring Boot / Spring Cloud / 보안 의존성
-- `src/main/resources/application.yml`: 라우트, CORS, actuator, circuitbreaker 설정
-- `src/main/java/com/didgo/apigateway/security/GatewayAuthenticationFilter.java`: 핵심 인증 필터
-- `src/main/java/com/didgo/apigateway/security/JwtTokenValidator.java`: JWT 검증기
-- `src/main/java/com/didgo/apigateway/config/GatewayResilienceConfig.java`: TimeLimiter 적용
-- `src/main/java/com/didgo/apigateway/fallback/FallbackController.java`: 장애 fallback 응답
-- `Dockerfile`: 배포 이미지 정의
+- `plan.md`: ?ㅺ퀎 ?섎룄? ?붽뎄?ы빆
+- `pom.xml`: Spring Boot / Spring Cloud / 蹂댁븞 ?섏〈??
+- `src/main/resources/application.yml`: ?쇱슦?? CORS, actuator, circuitbreaker ?ㅼ젙
+- `src/main/java/com/didgo/apigateway/security/GatewayAuthenticationFilter.java`: ?듭떖 ?몄쬆 ?꾪꽣
+- `src/main/java/com/didgo/apigateway/security/JwtTokenValidator.java`: JWT 寃利앷린
+- `src/main/java/com/didgo/apigateway/config/GatewayResilienceConfig.java`: TimeLimiter ?곸슜
+- `src/main/java/com/didgo/apigateway/fallback/FallbackController.java`: ?μ븷 fallback ?묐떟
+- `Dockerfile`: 諛고룷 ?대?吏 ?뺤쓽
 
-테스트 상태:
+?뚯뒪???곹깭:
 
-- 단일 `contextLoads()` 테스트 1개만 존재
-- 최근 실행 결과는 `Tests run: 1, Failures: 0, Errors: 0`
+- ?⑥씪 `contextLoads()` ?뚯뒪??1媛쒕쭔 議댁옱
+- 理쒓렐 ?ㅽ뻾 寃곌낵??`Tests run: 1, Failures: 0, Errors: 0`
 
-결론적으로, 현재 상태는 "동작하는 최소 게이트웨이"에 가깝고, 아키텍처 방향은 맞지만 테스트와 운영 보강은 아직 부족하다.
+寃곕줎?곸쑝濡? ?꾩옱 ?곹깭??"?숈옉?섎뒗 理쒖냼 寃뚯씠?몄썾????媛源앷퀬, ?꾪궎?띿쿂 諛⑺뼢? 留욎?留??뚯뒪?몄? ?댁쁺 蹂닿컯? ?꾩쭅 遺議깊븯??
 
-## 3. 기술 스택 분석
+## 3. 湲곗닠 ?ㅽ깮 遺꾩꽍
 
-`pom.xml` 기준 기술 구성:
+`pom.xml` 湲곗? 湲곗닠 援ъ꽦:
 
 - Java 21
 - Spring Boot 3.5.13
@@ -59,57 +59,57 @@
 - JJWT 0.12.7
 - Reactor Test
 
-선택 평가:
+?좏깮 ?됯?:
 
-- Spring Cloud Gateway 선택은 현재 요구사항에 적합하다.
-- Gateway 레벨에서 JWT를 직접 검증하기 위해 JJWT를 사용한 것도 이해 가능하다.
-- 다만 장기적으로는 Spring Security OAuth2 Resource Server를 쓰는 편이 토큰 검증 정책 확장, claim 기반 권한 처리, 표준화 측면에서 더 낫다.
+- Spring Cloud Gateway ?좏깮? ?꾩옱 ?붽뎄?ы빆???곹빀?섎떎.
+- Gateway ?덈꺼?먯꽌 JWT瑜?吏곸젒 寃利앺븯湲??꾪빐 JJWT瑜??ъ슜??寃껊룄 ?댄빐 媛?ν븯??
+- ?ㅻ쭔 ?κ린?곸쑝濡쒕뒗 Spring Security OAuth2 Resource Server瑜??곕뒗 ?몄씠 ?좏겙 寃利??뺤콉 ?뺤옣, claim 湲곕컲 沅뚰븳 泥섎━, ?쒖???痢〓㈃?먯꽌 ???ル떎.
 
-현재 방식의 장점:
+?꾩옱 諛⑹떇???μ젏:
 
-- 구현이 단순하다.
-- `user-service`와 같은 JWT 서명/issuer 계약을 빠르게 맞출 수 있다.
-- 토큰 타입(`ACCESS`/`REFRESH`) 검증을 직접 제어할 수 있다.
+- 援ы쁽???⑥닚?섎떎.
+- `user-service`? 媛숈? JWT ?쒕챸/issuer 怨꾩빟??鍮좊Ⅴ寃?留욎텧 ???덈떎.
+- ?좏겙 ???`ACCESS`/`REFRESH`) 寃利앹쓣 吏곸젒 ?쒖뼱?????덈떎.
 
-현재 방식의 단점:
+?꾩옱 諛⑹떇???⑥젏:
 
-- 표준 Security Filter Chain과 별개로 커스텀 필터 로직이 커진다.
-- 권한 모델이 복잡해질수록 수동 관리 비용이 증가한다.
-- JJWT 예외 처리, claim 해석, 헤더 주입을 모두 직접 유지해야 한다.
+- ?쒖? Security Filter Chain怨?蹂꾧컻濡?而ㅼ뒪? ?꾪꽣 濡쒖쭅??而ㅼ쭊??
+- 沅뚰븳 紐⑤뜽??蹂듭옟?댁쭏?섎줉 ?섎룞 愿由?鍮꾩슜??利앷??쒕떎.
+- JJWT ?덉쇅 泥섎━, claim ?댁꽍, ?ㅻ뜑 二쇱엯??紐⑤몢 吏곸젒 ?좎??댁빞 ?쒕떎.
 
-## 4. 설계 의도와 실제 구현의 관계
+## 4. ?ㅺ퀎 ?섎룄? ?ㅼ젣 援ы쁽??愿怨?
 
-`plan.md`의 핵심 방향은 다음과 같다.
+`plan.md`???듭떖 諛⑺뼢? ?ㅼ쓬怨?媛숇떎.
 
-- 외부 진입점은 Nginx
-- API 애플리케이션 진입점은 `api-gateway`
-- 내부 서비스는 Docker 내부 네트워크에만 노출
-- JWT 검증은 Gateway 일괄 처리
-- `api-gateway -> user-service`는 HTTP/REST
-- 서버 간 통신은 장기적으로 gRPC
-- CircuitBreaker 적용
+- ?몃? 吏꾩엯?먯? Nginx
+- API ?좏뵆由ъ??댁뀡 吏꾩엯?먯? `api-gateway`
+- ?대? ?쒕퉬?ㅻ뒗 Docker ?대? ?ㅽ듃?뚰겕?먮쭔 ?몄텧
+- JWT 寃利앹? Gateway ?쇨큵 泥섎━
+- `api-gateway -> user-service`??HTTP/REST
+- ?쒕쾭 媛??듭떊? ?κ린?곸쑝濡?gRPC
+- CircuitBreaker ?곸슜
 
-현재 구현은 이 설계를 대부분 충족한다.
+?꾩옱 援ы쁽? ???ㅺ퀎瑜??遺遺?異⑹”?쒕떎.
 
-충족된 항목:
+異⑹”????ぉ:
 
-- 외부 요청은 Nginx가 받고, API는 Gateway로 전달된다.
-- `user-service`는 호스트 포트 없이 내부 네트워크에서만 구동된다.
-- JWT 검증은 Gateway에서 수행된다.
-- Gateway는 `X-User-Id`를 내부 서비스에 전달한다.
-- CircuitBreaker와 fallback이 설정되어 있다.
-- CORS preflight가 Gateway에서 허용된다.
+- ?몃? ?붿껌? Nginx媛 諛쏄퀬, API??Gateway濡??꾨떖?쒕떎.
+- `user-service`???몄뒪???ы듃 ?놁씠 ?대? ?ㅽ듃?뚰겕?먯꽌留?援щ룞?쒕떎.
+- JWT 寃利앹? Gateway?먯꽌 ?섑뻾?쒕떎.
+- Gateway??`X-User-Id`瑜??대? ?쒕퉬?ㅼ뿉 ?꾨떖?쒕떎.
+- CircuitBreaker? fallback???ㅼ젙?섏뼱 ?덈떎.
+- CORS preflight媛 Gateway?먯꽌 ?덉슜?쒕떎.
 
-아직 1차 수준인 항목:
+?꾩쭅 1李??섏?????ぉ:
 
-- 라우팅 대상이 `user-service` 하나뿐이다.
-- gRPC는 설계만 있고 Gateway 자체에서 다룰 코드는 없다.
-- 테스트 자동화는 거의 없다.
-- 운영 정책과 개발 정책이 충분히 분리되어 있지 않다.
+- ?쇱슦????곸씠 `user-service` ?섎굹肉먯씠??
+- gRPC???ㅺ퀎留??덇퀬 Gateway ?먯껜?먯꽌 ?ㅻ０ 肄붾뱶???녿떎.
+- ?뚯뒪???먮룞?붾뒗 嫄곗쓽 ?녿떎.
+- ?댁쁺 ?뺤콉怨?媛쒕컻 ?뺤콉??異⑸텇??遺꾨━?섏뼱 ?덉? ?딅떎.
 
-## 5. 요청 처리 흐름 분석
+## 5. ?붿껌 泥섎━ ?먮쫫 遺꾩꽍
 
-현재 외부 요청 흐름은 다음과 같다.
+?꾩옱 ?몃? ?붿껌 ?먮쫫? ?ㅼ쓬怨?媛숇떎.
 
 ```text
 Client
@@ -120,138 +120,135 @@ Client
   -> user-service
 ```
 
-세부 단계:
+?몃? ?④퀎:
 
-1. 클라이언트가 `Authorization` 포함 API 요청을 보낸다.
-2. Nginx가 해당 경로를 `api-gateway:8080`으로 프록시한다.
-3. Gateway의 `GlobalFilter`가 요청을 가장 먼저 가로챈다.
-4. 공개 API면 토큰 검증 없이 통과시킨다.
-5. 보호 API면 `Bearer` 형식을 확인한다.
-6. JWT 서명, issuer, token type을 검증한다.
-7. 성공 시 내부용 헤더를 다시 구성한다.
-8. 라우트 설정에 따라 `user-service`로 전달한다.
-9. 장애나 timeout이 발생하면 fallback 컨트롤러가 `503`을 반환한다.
+1. ?대씪?댁뼵?멸? `Authorization` ?ы븿 API ?붿껌??蹂대궦??
+2. Nginx媛 ?대떦 寃쎈줈瑜?`api-gateway:8080`?쇰줈 ?꾨줉?쒗븳??
+3. Gateway??`GlobalFilter`媛 ?붿껌??媛??癒쇱? 媛濡쒖콌??
+4. 怨듦컻 API硫??좏겙 寃利??놁씠 ?듦낵?쒗궓??
+5. 蹂댄샇 API硫?`Bearer` ?뺤떇???뺤씤?쒕떎.
+6. JWT ?쒕챸, issuer, token type??寃利앺븳??
+7. ?깃났 ???대????ㅻ뜑瑜??ㅼ떆 援ъ꽦?쒕떎.
+8. ?쇱슦???ㅼ젙???곕씪 `user-service`濡??꾨떖?쒕떎.
+9. ?μ븷??timeout??諛쒖깮?섎㈃ fallback 而⑦듃濡ㅻ윭媛 `503`??諛섑솚?쒕떎.
 
-이 흐름은 설계상 맞다. 특히 외부 토큰을 내부 서비스가 직접 소비하지 않도록 `Authorization`을 제거하고 `X-User-Id`로 변환하는 점이 핵심이다.
+???먮쫫? ?ㅺ퀎??留욌떎. ?뱁엳 ?몃? ?좏겙???대? ?쒕퉬?ㅺ? 吏곸젒 ?뚮퉬?섏? ?딅룄濡?`Authorization`???쒓굅?섍퀬 `X-User-Id`濡?蹂?섑븯???먯씠 ?듭떖?대떎.
 
-## 6. 인증 필터 분석
+## 6. ?몄쬆 ?꾪꽣 遺꾩꽍
 
-핵심 구현은 [GatewayAuthenticationFilter.java](/Users/byeok27/Documents/GitHub/Didgo/api-gateway/src/main/java/com/didgo/apigateway/security/GatewayAuthenticationFilter.java) 에 있다.
+?듭떖 援ы쁽? [GatewayAuthenticationFilter.java](/Users/byeok27/Documents/GitHub/Didgo/api-gateway/src/main/java/com/didgo/apigateway/security/GatewayAuthenticationFilter.java) ???덈떎.
 
-주요 동작:
+二쇱슂 ?숈옉:
 
 - `GlobalFilter`, `Ordered.HIGHEST_PRECEDENCE`
-- 클라이언트가 넣은 `X-User-Id`, `X-User-Role`, `X-Request-Id` 제거
-- `POST /api/auth/signup`, `POST /api/auth/login`, `POST /api/auth/reissue`는 공개
-- `/swagger-ui*`, `/v3/api-docs*`는 공개
-- `OPTIONS`는 preflight로 간주해 공개
-- 보호 API는 `Authorization: Bearer` 필수
-- 검증 성공 시:
-  - `Authorization` 제거
-  - `X-User-Id` 추가
-  - `X-User-Role=USER` 추가
-  - `X-Request-Id` 추가
+- `POST /api/auth/signup`, `POST /api/auth/login`, `POST /api/auth/reissue`??怨듦컻
+- `/swagger-ui*`, `/v3/api-docs*`??怨듦컻
+- `OPTIONS`??preflight濡?媛꾩＜??怨듦컻
+- 蹂댄샇 API??`Authorization: Bearer` ?꾩닔
+- 寃利??깃났 ??
+  - `Authorization` ?쒓굅
+  - `X-User-Id` 異붽?
+  - `X-Request-Id` 異붽?
 
-좋은 점:
+醫뗭? ??
 
-- 내부 헤더 위조 방지의 기본 형태가 들어가 있다.
-- 공개 경로와 보호 경로 구분이 명확하다.
-- Gateway에서 직접 JSON 에러 응답을 만든다.
-- preflight OPTIONS 허용이 추가되어 브라우저 클라이언트와 맞는다.
+- ?대? ?ㅻ뜑 ?꾩“ 諛⑹???湲곕낯 ?뺥깭媛 ?ㅼ뼱媛 ?덈떎.
+- 怨듦컻 寃쎈줈? 蹂댄샇 寃쎈줈 援щ텇??紐낇솗?섎떎.
+- Gateway?먯꽌 吏곸젒 JSON ?먮윭 ?묐떟??留뚮뱺??
+- preflight OPTIONS ?덉슜??異붽??섏뼱 釉뚮씪?곗? ?대씪?댁뼵?몄? 留욌뒗??
 
-제한 사항:
+?쒗븳 ?ы빆:
 
-- 역할 모델이 현재 `USER` 하드코딩이다.
-- 토큰에서 role/authority claim을 읽지 않는다.
-- 공개 경로 목록이 코드 상수에 박혀 있어 라우트 확장 시 누락 위험이 있다.
-- 내부 헤더는 제거하지만 내부 서비스가 추가 검증 없이 이를 신뢰하는 구조다.
+- ??븷 紐⑤뜽???꾩옱 `USER` ?섎뱶肄붾뵫?대떎.
+- ?좏겙?먯꽌 role/authority claim???쎌? ?딅뒗??
+- 怨듦컻 寃쎈줈 紐⑸줉??肄붾뱶 ?곸닔??諛뺥? ?덉뼱 ?쇱슦???뺤옣 ???꾨씫 ?꾪뿕???덈떎.
+- ?대? ?ㅻ뜑???쒓굅?섏?留??대? ?쒕퉬?ㅺ? 異붽? 寃利??놁씠 ?대? ?좊ː?섎뒗 援ъ“??
 
-운영상 의미:
+?댁쁺???섎?:
 
-- 현재 구조는 "외부 사용자가 내부 사용자 ID를 위조하는 것"은 막지만, "내부 네트워크에 있는 다른 서비스가 헤더를 위조하는 것"까지 막지는 못한다.
+- ?꾩옱 援ъ“??"?몃? ?ъ슜?먭? ?대? ?ъ슜??ID瑜??꾩“?섎뒗 寃?? 留됱?留? "?대? ?ㅽ듃?뚰겕???덈뒗 ?ㅻⅨ ?쒕퉬?ㅺ? ?ㅻ뜑瑜??꾩“?섎뒗 寃?源뚯? 留됱???紐삵븳??
 
-## 7. JWT 검증기 분석
+## 7. JWT 寃利앷린 遺꾩꽍
 
-[JwtTokenValidator.java](/Users/byeok27/Documents/GitHub/Didgo/api-gateway/src/main/java/com/didgo/apigateway/security/JwtTokenValidator.java) 의 책임은 단순하다.
+[JwtTokenValidator.java](/Users/byeok27/Documents/GitHub/Didgo/api-gateway/src/main/java/com/didgo/apigateway/security/JwtTokenValidator.java) ??梨낆엫? ?⑥닚?섎떎.
 
-검증 요소:
+寃利??붿냼:
 
 - HMAC secret
-- issuer 일치 여부
+- issuer ?쇱튂 ?щ?
 - claim `tokenType == ACCESS`
-- subject를 `Long` userId로 파싱
+- subject瑜?`Long` userId濡??뚯떛
 
-에러 처리:
+?먮윭 泥섎━:
 
-- 만료 토큰은 `EXPIRED_TOKEN`
-- 그 외는 `INVALID_TOKEN`
+- 留뚮즺 ?좏겙? `EXPIRED_TOKEN`
+- 洹??몃뒗 `INVALID_TOKEN`
 
-장점:
+?μ젏:
 
-- `Refresh Token`으로 보호 API 접근을 막는다.
-- issuer가 다르면 거부한다.
-- 구현이 짧고 추적이 쉽다.
+- `Refresh Token`?쇰줈 蹂댄샇 API ?묎렐??留됰뒗??
+- issuer媛 ?ㅻⅤ硫?嫄곕??쒕떎.
+- 援ы쁽??吏㏐퀬 異붿쟻???쎈떎.
 
-리스크:
+由ъ뒪??
 
-- secret rotation 고려가 없다.
-- audience, not-before, clock skew 같은 세부 정책이 없다.
-- token subject가 숫자가 아니면 `Long.parseLong()`에서 예외가 나고 결국 `INVALID_TOKEN`으로 처리된다. 동작상 문제는 없지만 의도적인 검증이라고 보기는 어렵다.
+- secret rotation 怨좊젮媛 ?녿떎.
+- audience, not-before, clock skew 媛숈? ?몃? ?뺤콉???녿떎.
+- token subject媛 ?レ옄媛 ?꾨땲硫?`Long.parseLong()`?먯꽌 ?덉쇅媛 ?섍퀬 寃곌뎅 `INVALID_TOKEN`?쇰줈 泥섎━?쒕떎. ?숈옉??臾몄젣???놁?留??섎룄?곸씤 寃利앹씠?쇨퀬 蹂닿린???대졄??
 
-장기 개선 방향:
+?κ린 媛쒖꽑 諛⑺뼢:
 
-- key rotation 지원
-- claim 기반 role / tenant / scope 해석
-- 표준 Resource Server 전환 검토
+- key rotation 吏??
+- claim 湲곕컲 role / tenant / scope ?댁꽍
+- ?쒖? Resource Server ?꾪솚 寃??
 
-## 8. SecurityConfig 분석
+## 8. SecurityConfig 遺꾩꽍
 
-[SecurityConfig.java](/Users/byeok27/Documents/GitHub/Didgo/api-gateway/src/main/java/com/didgo/apigateway/security/SecurityConfig.java) 는 Spring Security 자체로는 모든 요청을 `permitAll()` 한다.
+[SecurityConfig.java](/Users/byeok27/Documents/GitHub/Didgo/api-gateway/src/main/java/com/didgo/apigateway/security/SecurityConfig.java) ??Spring Security ?먯껜濡쒕뒗 紐⑤뱺 ?붿껌??`permitAll()` ?쒕떎.
 
-즉, 보안의 실제 강제는 `SecurityWebFilterChain`이 아니라 `GlobalFilter`가 담당한다.
+利? 蹂댁븞???ㅼ젣 媛뺤젣??`SecurityWebFilterChain`???꾨땲??`GlobalFilter`媛 ?대떦?쒕떎.
 
-이 설계의 의미:
+???ㅺ퀎???섎?:
 
-- Gateway는 Spring Security 인가 체계보다는 라우팅 전처리 필터로 인증을 처리한다.
-- 구현은 단순하지만 보안 규칙이 Spring Security DSL에 표현되지 않으므로 추후 규칙이 늘어나면 가독성이 떨어질 수 있다.
+- Gateway??Spring Security ?멸? 泥닿퀎蹂대떎???쇱슦???꾩쿂由??꾪꽣濡??몄쬆??泥섎━?쒕떎.
+- 援ы쁽? ?⑥닚?섏?留?蹂댁븞 洹쒖튃??Spring Security DSL???쒗쁽?섏? ?딆쑝誘濡?異뷀썑 洹쒖튃???섏뼱?섎㈃ 媛?낆꽦???⑥뼱吏????덈떎.
 
-현재 상태에서는 허용 가능하지만, 다음 상황이 오면 재검토가 필요하다.
+?꾩옱 ?곹깭?먯꽌???덉슜 媛?ν븯吏留? ?ㅼ쓬 ?곹솴???ㅻ㈃ ?ш??좉? ?꾩슂?섎떎.
 
-- 관리자 API 추가
-- 서비스별 권한 정책 추가
-- Route별 세분화된 인증 정책 추가
-- OAuth2/OIDC 연동
+- 愿由ъ옄 API 異붽?
+- ?쒕퉬?ㅻ퀎 沅뚰븳 ?뺤콉 異붽?
+- Route蹂??몃텇?붾맂 ?몄쬆 ?뺤콉 異붽?
+- OAuth2/OIDC ?곕룞
 
-## 9. 라우팅 설정 분석
+## 9. ?쇱슦???ㅼ젙 遺꾩꽍
 
-[application.yml](/Users/byeok27/Documents/GitHub/Didgo/api-gateway/src/main/resources/application.yml) 기준 라우트는 2개다.
+[application.yml](/Users/byeok27/Documents/GitHub/Didgo/api-gateway/src/main/resources/application.yml) 湲곗? ?쇱슦?몃뒗 2媛쒕떎.
 
 - `user-service-api`: `/api/**`
 - `user-service-docs`: `/swagger-ui.html`, `/swagger-ui/**`, `/v3/api-docs/**`
 
-현재 라우트 구조의 장점:
+?꾩옱 ?쇱슦??援ъ“???μ젏:
 
-- 단순하다.
-- `user-service` 한 개를 대상으로 한 초기 구성에 적합하다.
-- 문서 경로와 일반 API 경로를 분리해 향후 정책 분리 여지를 남겼다.
+- ?⑥닚?섎떎.
+- `user-service` ??媛쒕? ??곸쑝濡???珥덇린 援ъ꽦???곹빀?섎떎.
+- 臾몄꽌 寃쎈줈? ?쇰컲 API 寃쎈줈瑜?遺꾨━???ν썑 ?뺤콉 遺꾨━ ?ъ?瑜??④꼈??
 
-한계:
+?쒓퀎:
 
-- 서비스가 늘어나면 `Path` 조건과 공개/보호 경로 조건이 분산된다.
-- 공개 API 정책은 코드 필터에, 실제 전달 대상은 YAML에 흩어져 있다.
-- `/api/**` 전체를 한 서비스로 보내는 구조라 multi-service API gateway로 확장될 때 재구성이 필요하다.
+- ?쒕퉬?ㅺ? ?섏뼱?섎㈃ `Path` 議곌굔怨?怨듦컻/蹂댄샇 寃쎈줈 議곌굔??遺꾩궛?쒕떎.
+- 怨듦컻 API ?뺤콉? 肄붾뱶 ?꾪꽣?? ?ㅼ젣 ?꾨떖 ??곸? YAML???⑹뼱???덈떎.
+- `/api/**` ?꾩껜瑜????쒕퉬?ㅻ줈 蹂대궡??援ъ“??multi-service API gateway濡??뺤옣?????ш뎄?깆씠 ?꾩슂?섎떎.
 
-확장 시 예상 방향:
+?뺤옣 ???덉긽 諛⑺뼢:
 
 - `/api/users/**` -> `user-service`
 - `/api/trainings/**` -> `training-service`
-- `/api/reports/**` -> `report-service`
-- 공통 인증 필터는 유지
-- 서비스별 route metadata 또는 predicate 기반 공개 경로 정책 분리
+- 怨듯넻 ?몄쬆 ?꾪꽣???좎?
+- ?쒕퉬?ㅻ퀎 route metadata ?먮뒗 predicate 湲곕컲 怨듦컻 寃쎈줈 ?뺤콉 遺꾨━
 
-## 10. CORS 분석
+## 10. CORS 遺꾩꽍
 
-현재 CORS는 전역으로 다음 조건을 연다.
+?꾩옱 CORS???꾩뿭?쇰줈 ?ㅼ쓬 議곌굔???곕떎.
 
 - Origin: `localhost`, `localhost:3000`, `localhost:5173`
 - Methods: `GET, POST, PATCH, PUT, DELETE, OPTIONS`
@@ -259,21 +256,21 @@ Client
 - Exposed Headers: `Authorization`, `X-Request-Id`
 - Credentials: `true`
 
-좋은 점:
+醫뗭? ??
 
-- 프론트엔드 개발 서버와 바로 붙기 좋다.
-- preflight OPTIONS가 실제 필터 레벨에서도 허용된다.
+- ?꾨줎?몄뿏??媛쒕컻 ?쒕쾭? 諛붾줈 遺숆린 醫뗫떎.
+- preflight OPTIONS媛 ?ㅼ젣 ?꾪꽣 ?덈꺼?먯꽌???덉슜?쒕떎.
 
-주의:
+二쇱쓽:
 
-- `allow-credentials=true`와 넓은 Origin 사용은 운영 환경에서 더 엄격히 관리해야 한다.
-- 프로덕션에서는 profile별로 origin whitelist를 분리하는 것이 맞다.
+- `allow-credentials=true`? ?볦? Origin ?ъ슜? ?댁쁺 ?섍꼍?먯꽌 ???꾧꺽??愿由ы빐???쒕떎.
+- ?꾨줈?뺤뀡?먯꽌??profile蹂꾨줈 origin whitelist瑜?遺꾨━?섎뒗 寃껋씠 留욌떎.
 
-## 11. CircuitBreaker / Fallback 분석
+## 11. CircuitBreaker / Fallback 遺꾩꽍
 
-현재 CircuitBreaker 이름은 `userServiceCircuitBreaker`다.
+?꾩옱 CircuitBreaker ?대쫫? `userServiceCircuitBreaker`??
 
-설정값:
+?ㅼ젙媛?
 
 - failure-rate-threshold: `50`
 - sliding-window-size: `20`
@@ -284,177 +281,178 @@ Client
 - slow-call-rate-threshold: `50`
 - timeLimiter timeout-duration: `3s`
 
-추가 코드:
+異붽? 肄붾뱶:
 
 - [GatewayResilienceConfig.java](/Users/byeok27/Documents/GitHub/Didgo/api-gateway/src/main/java/com/didgo/apigateway/config/GatewayResilienceConfig.java)
 - [FallbackController.java](/Users/byeok27/Documents/GitHub/Didgo/api-gateway/src/main/java/com/didgo/apigateway/fallback/FallbackController.java)
 
-평가:
+?됯?:
 
-- 현재 값은 무난한 초기값이다.
-- `user-service` 지연을 무한정 기다리지 않도록 `3s` 타임아웃을 걸어둔 점이 적절하다.
-- fallback 응답을 Gateway가 직접 제공하므로 외부 클라이언트는 내부 장애 세부사항을 몰라도 된다.
+- ?꾩옱 媛믪? 臾대궃??珥덇린媛믪씠??
+- `user-service` 吏?곗쓣 臾댄븳??湲곕떎由ъ? ?딅룄濡?`3s` ??꾩븘?껋쓣 嫄몄뼱???먯씠 ?곸젅?섎떎.
+- fallback ?묐떟??Gateway媛 吏곸젒 ?쒓났?섎?濡??몃? ?대씪?댁뼵?몃뒗 ?대? ?μ븷 ?몃??ы빆??紐곕씪???쒕떎.
 
-한계:
+?쒓퀎:
 
-- fallback은 현재 `user-service` 전체 장애를 하나의 에러 코드로만 표현한다.
-- timeout, connection failure, open circuit를 구분하지 않는다.
-- 관측성 측면에서 actuator 외에 structured logging이나 trace 연계가 아직 없다.
+- fallback? ?꾩옱 `user-service` ?꾩껜 ?μ븷瑜??섎굹???먮윭 肄붾뱶濡쒕쭔 ?쒗쁽?쒕떎.
+- timeout, connection failure, open circuit瑜?援щ텇?섏? ?딅뒗??
+- 愿痢≪꽦 痢〓㈃?먯꽌 actuator ?몄뿉 structured logging?대굹 trace ?곌퀎媛 ?꾩쭅 ?녿떎.
 
-## 12. 애플리케이션 부트스트랩 분석
+## 12. ?좏뵆由ъ??댁뀡 遺?몄뒪?몃옪 遺꾩꽍
 
-[ApiGatewayApplication.java](/Users/byeok27/Documents/GitHub/Didgo/api-gateway/src/main/java/com/didgo/apigateway/ApiGatewayApplication.java) 는 `ReactiveUserDetailsServiceAutoConfiguration`을 제외한다.
+[ApiGatewayApplication.java](/Users/byeok27/Documents/GitHub/Didgo/api-gateway/src/main/java/com/didgo/apigateway/ApiGatewayApplication.java) ??`ReactiveUserDetailsServiceAutoConfiguration`???쒖쇅?쒕떎.
 
-의도:
+?섎룄:
 
-- Spring Security 기본 사용자 자동 생성과 관련된 불필요한 비밀번호 로그를 제거한다.
-- Gateway가 자체 사용자 저장소를 가지지 않는 구조를 코드 차원에서 명확히 한다.
+- Spring Security 湲곕낯 ?ъ슜???먮룞 ?앹꽦怨?愿?⑤맂 遺덊븘?뷀븳 鍮꾨?踰덊샇 濡쒓렇瑜??쒓굅?쒕떎.
+- Gateway媛 ?먯껜 ?ъ슜????μ냼瑜?媛吏吏 ?딅뒗 援ъ“瑜?肄붾뱶 李⑥썝?먯꽌 紐낇솗???쒕떎.
 
-이 판단은 맞다. Gateway는 사용자 DB나 인메모리 계정을 필요로 하지 않는다.
+???먮떒? 留욌떎. Gateway???ъ슜??DB???몃찓紐⑤━ 怨꾩젙???꾩슂濡??섏? ?딅뒗??
 
-## 13. Dockerfile 분석
+## 13. Dockerfile 遺꾩꽍
 
-[Dockerfile](/Users/byeok27/Documents/GitHub/Didgo/api-gateway/Dockerfile) 은 멀티스테이지 빌드다.
+[Dockerfile](/Users/byeok27/Documents/GitHub/Didgo/api-gateway/Dockerfile) ? 硫?곗뒪?뚯씠吏 鍮뚮뱶??
 
-구성:
+援ъ꽦:
 
 - build stage: `eclipse-temurin:21-jdk`
-- Maven Wrapper로 `dependency:go-offline`
+- Maven Wrapper濡?`dependency:go-offline`
 - `package`
 - runtime stage: `eclipse-temurin:21-jre`
 
-장점:
+?μ젏:
 
-- 초기 `maven:` 베이스 이미지 pull 실패를 피하도록 단순화된 구성을 사용한다.
-- runtime 이미지가 JRE 기반이라 빌드 이미지보다 가볍다.
-- Maven Wrapper를 사용해 로컬/CI 버전 차이를 줄인다.
+- 珥덇린 `maven:` 踰좎씠???대?吏 pull ?ㅽ뙣瑜??쇳븯?꾨줉 ?⑥닚?붾맂 援ъ꽦???ъ슜?쒕떎.
+- runtime ?대?吏媛 JRE 湲곕컲?대씪 鍮뚮뱶 ?대?吏蹂대떎 媛蹂띾떎.
+- Maven Wrapper瑜??ъ슜??濡쒖뺄/CI 踰꾩쟾 李⑥씠瑜?以꾩씤??
 
-보완점:
+蹂댁셿??
 
-- healthcheck가 없다.
-- non-root user 실행이 아니다.
-- layer caching을 더 세밀히 최적화할 수 있다.
+- healthcheck媛 ?녿떎.
+- non-root user ?ㅽ뻾???꾨땲??
+- layer caching?????몃???理쒖쟻?뷀븷 ???덈떎.
 
-## 14. 테스트 상태 분석
+## 14. ?뚯뒪???곹깭 遺꾩꽍
 
-현재 테스트는 [ApiGatewayApplicationTests.java](/Users/byeok27/Documents/GitHub/Didgo/api-gateway/src/test/java/com/didgo/apigateway/ApiGatewayApplicationTests.java) 하나뿐이다.
+?꾩옱 ?뚯뒪?몃뒗 [ApiGatewayApplicationTests.java](/Users/byeok27/Documents/GitHub/Didgo/api-gateway/src/test/java/com/didgo/apigateway/ApiGatewayApplicationTests.java) ?섎굹肉먯씠??
 
-내용:
+?댁슜:
 
-- Spring Context가 뜨는지만 본다.
-- 테스트용 JWT secret, issuer를 주입한다.
+- Spring Context媛 ?⑤뒗吏留?蹂몃떎.
+- ?뚯뒪?몄슜 JWT secret, issuer瑜?二쇱엯?쒕떎.
 
-이 테스트가 보장하는 것:
+???뚯뒪?멸? 蹂댁옣?섎뒗 寃?
 
-- 설정 충돌 없이 애플리케이션 컨텍스트가 올라온다.
-- 최소한 빈 등록은 된다.
+- ?ㅼ젙 異⑸룎 ?놁씠 ?좏뵆由ъ??댁뀡 而⑦뀓?ㅽ듃媛 ?щ씪?⑤떎.
+- 理쒖냼??鍮??깅줉? ?쒕떎.
 
-이 테스트가 보장하지 못하는 것:
+???뚯뒪?멸? 蹂댁옣?섏? 紐삵븯??寃?
 
-- 공개 API 판별
-- 보호 API 401 차단
-- Access Token과 Refresh Token 구분
-- `Authorization` 제거와 `X-User-Id` 주입
-- 클라이언트 헤더 sanitizing
-- fallback 동작
-- CORS preflight 동작
-- route predicate 동작
+- 怨듦컻 API ?먮퀎
+- 蹂댄샇 API 401 李⑤떒
+- Access Token怨?Refresh Token 援щ텇
+- `Authorization` ?쒓굅? `X-User-Id` 二쇱엯
+- ?대씪?댁뼵???ㅻ뜑 sanitizing
+- fallback ?숈옉
+- CORS preflight ?숈옉
+- route predicate ?숈옉
 
-현재 프로젝트에서 가장 큰 품질 공백은 여기다. 동작은 수동 검증으로 확인했지만, 회귀를 막을 자동 테스트가 거의 없다.
+?꾩옱 ?꾨줈?앺듃?먯꽌 媛?????덉쭏 怨듬갚? ?ш린?? ?숈옉? ?섎룞 寃利앹쑝濡??뺤씤?덉?留? ?뚭?瑜?留됱쓣 ?먮룞 ?뚯뒪?멸? 嫄곗쓽 ?녿떎.
 
-## 15. 최근 실제 검증 결과
+## 15. 理쒓렐 ?ㅼ젣 寃利?寃곌낵
 
-최근 확인된 사실:
+理쒓렐 ?뺤씤???ъ떎:
 
-- `mvnw test` 통과
-- Docker 이미지 빌드 성공
-- Nginx -> api-gateway -> user-service 흐름 동작
-- `POST /api/auth/signup` 성공
-- `POST /api/auth/login` 성공
-- 무토큰 `GET /api/users/me`는 `401 INVALID_TOKEN`
-- 유효한 Access Token 포함 `GET /api/users/me`는 `200 OK`
-- `OPTIONS /api/users/me` preflight는 `200 OK`
+- `mvnw test` ?듦낵
+- Docker ?대?吏 鍮뚮뱶 ?깃났
+- Nginx -> api-gateway -> user-service ?먮쫫 ?숈옉
+- `POST /api/auth/signup` ?깃났
+- `POST /api/auth/login` ?깃났
+- 臾댄넗??`GET /api/users/me`??`401 INVALID_TOKEN`
+- ?좏슚??Access Token ?ы븿 `GET /api/users/me`??`200 OK`
+- `OPTIONS /api/users/me` preflight??`200 OK`
 
-중간에 발견했던 문제:
+以묎컙??諛쒓껄?덈뜕 臾몄젣:
 
-- Nginx가 `Authorization` 헤더를 명시적으로 넘기지 않아 보호 API가 실패했다.
-- 이를 `proxy_set_header Authorization $http_authorization;` 추가로 해결했다.
+- Nginx媛 `Authorization` ?ㅻ뜑瑜?紐낆떆?곸쑝濡??섍린吏 ?딆븘 蹂댄샇 API媛 ?ㅽ뙣?덈떎.
+- ?대? `proxy_set_header Authorization $http_authorization;` 異붽?濡??닿껐?덈떎.
 
-이 문제는 중요하다. Gateway 프로젝트 자체의 문제는 아니지만, 게이트웨이 구조에서는 외부 프록시와의 계약도 사실상 프로젝트 일부다.
+??臾몄젣??以묒슂?섎떎. Gateway ?꾨줈?앺듃 ?먯껜??臾몄젣???꾨땲吏留? 寃뚯씠?몄썾??援ъ“?먯꽌???몃? ?꾨줉?쒖???怨꾩빟???ъ떎???꾨줈?앺듃 ?쇰???
 
-## 16. 설계 대비 좋은 점
+## 16. ?ㅺ퀎 ?鍮?醫뗭? ??
 
-- 책임이 명확하다. Gateway는 토큰 검증과 라우팅에 집중한다.
-- 내부 서비스에 외부 JWT를 직접 전달하지 않는다.
-- 공개 API와 보호 API의 경계를 현재 요구사항 수준에서는 잘 반영했다.
-- preflight와 Swagger 경로를 고려했다.
-- Nginx를 유지한 채 애플리케이션 게이트웨이 계층을 추가한 구조가 합리적이다.
-- 코드량이 적어 이해가 쉽고, 구조적 부채가 아직 커지지 않았다.
+- 梨낆엫??紐낇솗?섎떎. Gateway???좏겙 寃利앷낵 ?쇱슦?낆뿉 吏묒쨷?쒕떎.
+- ?대? ?쒕퉬?ㅼ뿉 ?몃? JWT瑜?吏곸젒 ?꾨떖?섏? ?딅뒗??
+- 怨듦컻 API? 蹂댄샇 API??寃쎄퀎瑜??꾩옱 ?붽뎄?ы빆 ?섏??먯꽌????諛섏쁺?덈떎.
+- preflight? Swagger 寃쎈줈瑜?怨좊젮?덈떎.
+- Nginx瑜??좎???梨??좏뵆由ъ??댁뀡 寃뚯씠?몄썾??怨꾩링??異붽???援ъ“媛 ?⑸━?곸씠??
+- 肄붾뱶?됱씠 ?곸뼱 ?댄빐媛 ?쎄퀬, 援ъ“??遺梨꾧? ?꾩쭅 而ㅼ?吏 ?딆븯??
 
-## 17. 설계 대비 아쉬운 점
+## 17. ?ㅺ퀎 ?鍮??꾩돩????
 
-- 인증 정책이 Spring Security DSL이 아니라 커스텀 GlobalFilter에 몰려 있다.
-- 테스트가 사실상 없다.
-- role/authority 모델이 없다.
-- 다중 서비스 라우팅 확장 구조가 아직 없다.
-- 운영/개발 프로파일 분리가 없다.
-- 에러 메시지가 영어로 고정되어 있어 현재 전체 서비스의 한국어 응답과 일관되지 않는다.
-- 내부 신뢰 헤더 위조에 대한 2차 방어가 없다.
+- ?몄쬆 ?뺤콉??Spring Security DSL???꾨땲??而ㅼ뒪? GlobalFilter??紐곕젮 ?덈떎.
+- ?뚯뒪?멸? ?ъ떎???녿떎.
+- role/authority 紐⑤뜽???녿떎.
+- ?ㅼ쨷 ?쒕퉬???쇱슦???뺤옣 援ъ“媛 ?꾩쭅 ?녿떎.
+- ?댁쁺/媛쒕컻 ?꾨줈?뚯씪 遺꾨━媛 ?녿떎.
+- ?먮윭 硫붿떆吏媛 ?곸뼱濡?怨좎젙?섏뼱 ?덉뼱 ?꾩옱 ?꾩껜 ?쒕퉬?ㅼ쓽 ?쒓뎅???묐떟怨??쇨??섏? ?딅뒗??
+- ?대? ?좊ː ?ㅻ뜑 ?꾩“?????2李?諛⑹뼱媛 ?녿떎.
 
-## 18. 핵심 리스크
+## 18. ?듭떖 由ъ뒪??
 
-### 18.1 내부 신뢰 경계
+### 18.1 ?대? ?좊ː 寃쎄퀎
 
-현재 `user-service`는 `X-User-Id`를 신뢰한다. Gateway가 외부 헤더를 제거한 뒤 새로 넣는 구조라 외부 위조는 막지만, 내부 네트워크에서 임의 서비스가 직접 `user-service`를 두드리면 헤더 위조가 가능하다.
+?꾩옱 `user-service`??`X-User-Id`瑜??좊ː?쒕떎. Gateway媛 ?몃? ?ㅻ뜑瑜??쒓굅?????덈줈 ?ｋ뒗 援ъ“???몃? ?꾩“??留됱?留? ?대? ?ㅽ듃?뚰겕?먯꽌 ?꾩쓽 ?쒕퉬?ㅺ? 吏곸젒 `user-service`瑜??먮뱶由щ㈃ ?ㅻ뜑 ?꾩“媛 媛?ν븯??
 
-개선 방향:
+媛쒖꽑 諛⑺뼢:
 
-- Gateway 전용 shared secret header
-- HMAC 서명된 내부 헤더
+- Gateway ?꾩슜 shared secret header
+- HMAC ?쒕챸???대? ?ㅻ뜑
 - mTLS
 - service mesh / network policy
 
-### 18.2 테스트 부재
+### 18.2 ?뚯뒪??遺??
 
-수동 검증이 통과했다고 해서 안정성이 확보된 것은 아니다. 특히 라우팅, 헤더 sanitizing, token type 검증은 회귀 가능성이 높다.
+?섎룞 寃利앹씠 ?듦낵?덈떎怨??댁꽌 ?덉젙?깆씠 ?뺣낫??寃껋? ?꾨땲?? ?뱁엳 ?쇱슦?? ?ㅻ뜑 sanitizing, token type 寃利앹? ?뚭? 媛?μ꽦???믩떎.
 
-### 18.3 정책 분산
+### 18.3 ?뺤콉 遺꾩궛
 
-공개 API 목록은 `GatewayAuthenticationFilter`에 있고, 실제 라우트 목록은 `application.yml`에 있고, 외부 진입 라우팅은 Nginx에 있다. 서비스가 늘어나면 누락과 불일치 가능성이 커진다.
+怨듦컻 API 紐⑸줉? `GatewayAuthenticationFilter`???덇퀬, ?ㅼ젣 ?쇱슦??紐⑸줉? `application.yml`???덇퀬, ?몃? 吏꾩엯 ?쇱슦?낆? Nginx???덈떎. ?쒕퉬?ㅺ? ?섏뼱?섎㈃ ?꾨씫怨?遺덉씪移?媛?μ꽦??而ㅼ쭊??
 
-### 18.4 관측성 부족
+### 18.4 愿痢≪꽦 遺議?
 
-Actuator는 열려 있지만 request logging, trace correlation, structured error logging, metrics tagging이 부족하다.
+Actuator???대젮 ?덉?留?request logging, trace correlation, structured error logging, metrics tagging??遺議깊븯??
 
-## 19. 우선순위별 다음 작업
+## 19. ?곗꽑?쒖쐞蹂??ㅼ쓬 ?묒뾽
 
 ### P0
 
-- Gateway 인증 필터 단위/통합 테스트 추가
-- 공개/보호 API 분기 테스트 추가
-- `Authorization` 제거 및 `X-User-Id` 주입 테스트 추가
-- Refresh Token으로 보호 API 접근 시 차단 테스트 추가
+- Gateway ?몄쬆 ?꾪꽣 ?⑥쐞/?듯빀 ?뚯뒪??異붽?
+- 怨듦컻/蹂댄샇 API 遺꾧린 ?뚯뒪??異붽?
+- `Authorization` ?쒓굅 諛?`X-User-Id` 二쇱엯 ?뚯뒪??異붽?
+- Refresh Token?쇰줈 蹂댄샇 API ?묎렐 ??李⑤떒 ?뚯뒪??異붽?
 
 ### P1
 
-- 내부 헤더 신뢰 강화
-- 에러 응답 언어와 포맷 정책 통일
-- route/공개 경로 정책을 설정 기반으로 정리
+- ?대? ?ㅻ뜑 ?좊ː 媛뺥솕
+- ?먮윭 ?묐떟 ?몄뼱? ?щ㎎ ?뺤콉 ?듭씪
+- route/怨듦컻 寃쎈줈 ?뺤콉???ㅼ젙 湲곕컲?쇰줈 ?뺣━
 
 ### P1
 
-- `user-service` 외 다른 서비스 라우팅을 고려한 path 구조 설계
-- `/api/**` 단일 서비스 라우팅에서 서비스별 라우팅으로 전환 가능한 설계 초안 작성
+- `user-service` ???ㅻⅨ ?쒕퉬???쇱슦?낆쓣 怨좊젮??path 援ъ“ ?ㅺ퀎
+- `/api/**` ?⑥씪 ?쒕퉬???쇱슦?낆뿉???쒕퉬?ㅻ퀎 ?쇱슦?낆쑝濡??꾪솚 媛?ν븳 ?ㅺ퀎 珥덉븞 ?묒꽦
 
 ### P2
 
-- Spring Security Resource Server 전환 검토
-- profile별 CORS / actuator / docs 노출 정책 분리
-- Docker healthcheck, non-root 실행 추가
+- Spring Security Resource Server ?꾪솚 寃??
+- profile蹂?CORS / actuator / docs ?몄텧 ?뺤콉 遺꾨━
+- Docker healthcheck, non-root ?ㅽ뻾 異붽?
 
-## 20. 결론
+## 20. 寃곕줎
 
-현재 `api-gateway`는 작은 코드베이스지만 역할은 분명하고, 지금 단계의 요구사항에는 맞는 구현이다. 특히 JWT 검증 중앙화, 내부 헤더 재구성, Nginx와의 계층 분리, CircuitBreaker 적용이라는 핵심 목표는 달성했다.
+?꾩옱 `api-gateway`???묒? 肄붾뱶踰좎씠?ㅼ?留???븷? 遺꾨챸?섍퀬, 吏湲??④퀎???붽뎄?ы빆?먮뒗 留욌뒗 援ы쁽?대떎. ?뱁엳 JWT 寃利?以묒븰?? ?대? ?ㅻ뜑 ?ш뎄?? Nginx???怨꾩링 遺꾨━, CircuitBreaker ?곸슜?대씪???듭떖 紐⑺몴???ъ꽦?덈떎.
 
-반면 이 프로젝트는 아직 "운영 준비가 된 게이트웨이"라기보다 "정상 동작이 검증된 1차 기반 게이트웨이"에 가깝다. 다음 단계의 핵심은 기능 추가가 아니라 품질 보강이다. 가장 먼저 해야 할 일은 테스트 자동화와 내부 신뢰 경계 강화다.
+諛섎㈃ ???꾨줈?앺듃???꾩쭅 "?댁쁺 以鍮꾧? ??寃뚯씠?몄썾???쇨린蹂대떎 "?뺤긽 ?숈옉??寃利앸맂 1李?湲곕컲 寃뚯씠?몄썾????媛源앸떎. ?ㅼ쓬 ?④퀎???듭떖? 湲곕뒫 異붽?媛 ?꾨땲???덉쭏 蹂닿컯?대떎. 媛??癒쇱? ?댁빞 ???쇱? ?뚯뒪???먮룞?붿? ?대? ?좊ː 寃쎄퀎 媛뺥솕??
+
 

@@ -1,46 +1,46 @@
-# API Gateway 계획
+﻿# API Gateway 怨꾪쉷
 
-## 목표
+## 紐⑺몴
 
-Spring Cloud Gateway 기반의 전용 `api-gateway` 서비스를 구축한다. 모든 외부 API 요청은 API Gateway를 통해서만 제공하며, 각 백엔드 서비스는 외부에 직접 노출하지 않는다.
+Spring Cloud Gateway 湲곕컲???꾩슜 `api-gateway` ?쒕퉬?ㅻ? 援ъ텞?쒕떎. 紐⑤뱺 ?몃? API ?붿껌? API Gateway瑜??듯빐?쒕쭔 ?쒓났?섎ŉ, 媛?諛깆뿏???쒕퉬?ㅻ뒗 ?몃???吏곸젒 ?몄텧?섏? ?딅뒗??
 
-Nginx는 제거 대상이 아니다. Nginx는 외부 HTTP 진입점, 정적 프론트엔드 배포, TLS 종료, 로드밸런싱 역할을 담당하고, Spring Cloud Gateway는 API 라우팅, JWT 검증, 서킷브레이커 같은 애플리케이션 게이트웨이 역할을 담당한다.
+Nginx???쒓굅 ??곸씠 ?꾨땲?? Nginx???몃? HTTP 吏꾩엯?? ?뺤쟻 ?꾨줎?몄뿏??諛고룷, TLS 醫낅즺, 濡쒕뱶諛몃윴????븷???대떦?섍퀬, Spring Cloud Gateway??API ?쇱슦?? JWT 寃利? ?쒗궥釉뚮젅?댁빱 媛숈? ?좏뵆由ъ??댁뀡 寃뚯씠?몄썾????븷???대떦?쒕떎.
 
-## 핵심 원칙
+## ?듭떖 ?먯튃
 
-- 외부 클라이언트의 네트워크 진입점은 Nginx이다.
-- 외부 API 요청의 애플리케이션 진입점은 `api-gateway`이다.
-- `user-service` 같은 내부 서비스는 Docker 내부 네트워크에서만 접근한다.
-- JWT 검증은 API Gateway에서 일괄 수행한다.
-- 내부 서비스는 게이트웨이가 검증한 사용자 식별 정보를 신뢰한다.
-- 서버 간 통신은 REST가 아니라 gRPC를 기본으로 사용한다.
-- 서비스 장애 전파를 막기 위해 주요 라우트에 서킷브레이커를 적용한다.
+- ?몃? ?대씪?댁뼵?몄쓽 ?ㅽ듃?뚰겕 吏꾩엯?먯? Nginx?대떎.
+- ?몃? API ?붿껌???좏뵆由ъ??댁뀡 吏꾩엯?먯? `api-gateway`?대떎.
+- `user-service` 媛숈? ?대? ?쒕퉬?ㅻ뒗 Docker ?대? ?ㅽ듃?뚰겕?먯꽌留??묎렐?쒕떎.
+- JWT 寃利앹? API Gateway?먯꽌 ?쇨큵 ?섑뻾?쒕떎.
+- ?대? ?쒕퉬?ㅻ뒗 寃뚯씠?몄썾?닿? 寃利앺븳 ?ъ슜???앸퀎 ?뺣낫瑜??좊ː?쒕떎.
+- ?쒕쾭 媛??듭떊? REST媛 ?꾨땲??gRPC瑜?湲곕낯?쇰줈 ?ъ슜?쒕떎.
+- ?쒕퉬???μ븷 ?꾪뙆瑜?留됯린 ?꾪빐 二쇱슂 ?쇱슦?몄뿉 ?쒗궥釉뚮젅?댁빱瑜??곸슜?쒕떎.
 
-## 기술 기준
+## 湲곗닠 湲곗?
 
 - Java 21
 - Spring Boot 3.5.13
 - Spring Cloud 2025.0.x
 - Spring Cloud Gateway
 - Spring Security
-- JJWT 또는 Spring Security OAuth2 Resource Server
+- JJWT ?먮뒗 Spring Security OAuth2 Resource Server
 - Resilience4j CircuitBreaker
 - Actuator
 - Nginx
 - gRPC
 - Docker Compose
 
-## 전체 요청 흐름
+## ?꾩껜 ?붿껌 ?먮쫫
 
-외부 요청 흐름:
+?몃? ?붿껌 ?먮쫫:
 
-1. 클라이언트가 Nginx로 요청한다.
-2. Nginx는 정적 프론트엔드 요청을 직접 처리한다.
-3. Nginx는 `/api/**`, `/swagger-ui/**`, `/v3/api-docs/**` 같은 API 요청을 `api-gateway`로 전달한다.
-4. `api-gateway`가 JWT 검증, 내부 헤더 정리, 서킷브레이커 처리를 수행한다.
-5. `api-gateway`가 내부 서비스로 요청을 전달한다.
+1. ?대씪?댁뼵?멸? Nginx濡??붿껌?쒕떎.
+2. Nginx???뺤쟻 ?꾨줎?몄뿏???붿껌??吏곸젒 泥섎━?쒕떎.
+3. Nginx??`/api/**`, `/swagger-ui/**`, `/v3/api-docs/**` 媛숈? API ?붿껌??`api-gateway`濡??꾨떖?쒕떎.
+4. `api-gateway`媛 JWT 寃利? ?대? ?ㅻ뜑 ?뺣━, ?쒗궥釉뚮젅?댁빱 泥섎━瑜??섑뻾?쒕떎.
+5. `api-gateway`媛 ?대? ?쒕퉬?ㅻ줈 ?붿껌???꾨떖?쒕떎.
 
-초기 구조:
+珥덇린 援ъ“:
 
 ```text
 Client -> Nginx -> api-gateway -> user-service
@@ -48,45 +48,44 @@ Client -> Nginx -> api-gateway -> user-service
                      +-> future services
 ```
 
-서버 간 통신 구조:
+?쒕쾭 媛??듭떊 援ъ“:
 
 ```text
 training-service -> user-service gRPC
-report-service   -> user-service gRPC
 other-service    -> user-service gRPC
 ```
 
-## 서버 간 gRPC 통신 정책
+## ?쒕쾭 媛?gRPC ?듭떊 ?뺤콉
 
-API Gateway는 외부 클라이언트 요청을 내부 서비스로 라우팅하는 HTTP 계층이다. 백엔드 서비스가 다른 백엔드 서비스의 데이터를 조회하거나 명령을 호출할 때는 API Gateway를 거치지 않고 gRPC를 사용한다.
+API Gateway???몃? ?대씪?댁뼵???붿껌???대? ?쒕퉬?ㅻ줈 ?쇱슦?낇븯??HTTP 怨꾩링?대떎. 諛깆뿏???쒕퉬?ㅺ? ?ㅻⅨ 諛깆뿏???쒕퉬?ㅼ쓽 ?곗씠?곕? 議고쉶?섍굅??紐낅졊???몄텧???뚮뒗 API Gateway瑜?嫄곗튂吏 ?딄퀬 gRPC瑜??ъ슜?쒕떎.
 
-기본 원칙:
+湲곕낯 ?먯튃:
 
-- 외부 클라이언트 요청: `Nginx -> api-gateway -> service`
-- 서버 간 내부 요청: `service -> service gRPC`
-- `api-gateway -> user-service` 요청은 HTTP/REST로 전달한다.
-- API Gateway는 gRPC 프록시 역할을 1차 범위에 포함하지 않는다.
-- gRPC 포트는 외부에 노출하지 않고 Docker 내부 네트워크에서만 사용한다.
-- gRPC 계약은 `.proto` 파일로 관리한다.
-- 내부 REST API인 `/internal/**`는 최종 구조에서 gRPC로 대체한다.
+- ?몃? ?대씪?댁뼵???붿껌: `Nginx -> api-gateway -> service`
+- ?쒕쾭 媛??대? ?붿껌: `service -> service gRPC`
+- `api-gateway -> user-service` ?붿껌? HTTP/REST濡??꾨떖?쒕떎.
+- API Gateway??gRPC ?꾨줉????븷??1李?踰붿쐞???ы븿?섏? ?딅뒗??
+- gRPC ?ы듃???몃????몄텧?섏? ?딄퀬 Docker ?대? ?ㅽ듃?뚰겕?먯꽌留??ъ슜?쒕떎.
+- gRPC 怨꾩빟? `.proto` ?뚯씪濡?愿由ы븳??
+- ?대? REST API??`/internal/**`??理쒖쥌 援ъ“?먯꽌 gRPC濡??泥댄븳??
 
-예상 gRPC 대상:
+?덉긽 gRPC ???
 
-- 사용자 기본 정보 조회
-- 사용자 장애 정보 조회
-- 계정 상태 확인
-- 다른 서비스에서 필요한 최소 사용자 컨텍스트 조회
+- ?ъ슜??湲곕낯 ?뺣낫 議고쉶
+- ?ъ슜???μ븷 ?뺣낫 議고쉶
+- 怨꾩젙 ?곹깭 ?뺤씤
+- ?ㅻⅨ ?쒕퉬?ㅼ뿉???꾩슂??理쒖냼 ?ъ슜??而⑦뀓?ㅽ듃 議고쉶
 
-보안 방향:
+蹂댁븞 諛⑺뼢:
 
-- gRPC 호출은 내부 네트워크에서만 허용한다.
-- 필요 시 서비스 간 인증용 metadata를 추가한다.
-- 외부 JWT를 gRPC 호출에 그대로 의존하지 않는다.
-- Gateway가 검증한 사용자 컨텍스트가 필요한 경우 호출 서비스가 필요한 식별자만 gRPC 요청으로 전달한다.
+- gRPC ?몄텧? ?대? ?ㅽ듃?뚰겕?먯꽌留??덉슜?쒕떎.
+- ?꾩슂 ???쒕퉬??媛??몄쬆??metadata瑜?異붽??쒕떎.
+- ?몃? JWT瑜?gRPC ?몄텧??洹몃?濡??섏〈?섏? ?딅뒗??
+- Gateway媛 寃利앺븳 ?ъ슜??而⑦뀓?ㅽ듃媛 ?꾩슂??寃쎌슦 ?몄텧 ?쒕퉬?ㅺ? ?꾩슂???앸퀎?먮쭔 gRPC ?붿껌?쇰줈 ?꾨떖?쒕떎.
 
-## 라우팅 범위
+## ?쇱슦??踰붿쐞
 
-1차 라우팅 대상은 `user-service`이다.
+1李??쇱슦????곸? `user-service`?대떎.
 
 - `POST /api/auth/signup`
 - `POST /api/auth/login`
@@ -97,134 +96,134 @@ API Gateway는 외부 클라이언트 요청을 내부 서비스로 라우팅하
 - `/swagger-ui/**`
 - `/v3/api-docs/**`
 
-외부에 노출하지 않을 경로:
+?몃????몄텧?섏? ?딆쓣 寃쎈줈:
 
 - `/internal/**`
-- 서비스별 Actuator 상세 엔드포인트
-- 서비스 간 gRPC 엔드포인트
+- ?쒕퉬?ㅻ퀎 Actuator ?곸꽭 ?붾뱶?ъ씤??
+- ?쒕퉬??媛?gRPC ?붾뱶?ъ씤??
 
-## 인증 정책
+## ?몄쬆 ?뺤콉
 
-공개 API:
+怨듦컻 API:
 
 - `POST /api/auth/signup`
 - `POST /api/auth/login`
 - `POST /api/auth/reissue`
-- Swagger/OpenAPI 문서 경로는 로컬 개발 환경에서만 공개
+- Swagger/OpenAPI 臾몄꽌 寃쎈줈??濡쒖뺄 媛쒕컻 ?섍꼍?먯꽌留?怨듦컻
 
-인증 필요 API:
+?몄쬆 ?꾩슂 API:
 
 - `POST /api/auth/logout`
 - `GET /api/users/me`
 - `PATCH /api/users/me`
-- 이후 추가되는 사용자 전용 API
+- ?댄썑 異붽??섎뒗 ?ъ슜???꾩슜 API
 
-JWT 검증 흐름:
+JWT 寃利??먮쫫:
 
-1. Gateway가 `Authorization: Bearer <token>` 헤더를 확인한다.
-2. 공개 API가 아니면 Access Token을 검증한다.
-3. 토큰이 없거나 유효하지 않으면 Gateway가 직접 `401` 응답을 반환한다.
-4. 검증 성공 시 Gateway가 내부 서비스로 사용자 식별 헤더를 전달한다.
-5. 내부 서비스는 전달받은 식별 정보를 기준으로 요청을 처리한다.
+1. Gateway媛 `Authorization: Bearer <token>` ?ㅻ뜑瑜??뺤씤?쒕떎.
+2. 怨듦컻 API媛 ?꾨땲硫?Access Token??寃利앺븳??
+3. ?좏겙???녾굅???좏슚?섏? ?딆쑝硫?Gateway媛 吏곸젒 `401` ?묐떟??諛섑솚?쒕떎.
+4. 寃利??깃났 ??Gateway媛 ?대? ?쒕퉬?ㅻ줈 ?ъ슜???앸퀎 ?ㅻ뜑瑜??꾨떖?쒕떎.
+5. ?대? ?쒕퉬?ㅻ뒗 ?꾨떖諛쏆? ?앸퀎 ?뺣낫瑜?湲곗??쇰줈 ?붿껌??泥섎━?쒕떎.
 
-내부 전달 헤더 후보:
+?대? ?꾨떖 ?ㅻ뜑 ?꾨낫:
 
 - `X-User-Id`
-- `X-User-Role`
 - `X-Request-Id`
 
-주의할 점:
+二쇱쓽????
 
-- 외부 클라이언트가 임의로 보낸 `X-User-Id` 같은 내부 헤더는 Gateway에서 제거한 뒤 다시 설정한다.
-- `user-service`의 기존 JWT 필터는 Gateway 전환 단계에서 비활성화하거나 내부 헤더 기반 인증으로 대체한다.
-- 최종 구조에서는 내부 서비스가 외부 토큰을 직접 검증하지 않는다.
-- 공개 API인 회원가입, 로그인, 토큰 재발급은 Gateway JWT 검증을 거치지 않고 라우팅한다.
-- 로그아웃, 내 정보 조회, 내 정보 수정은 Gateway에서 Access Token을 검증한 뒤 라우팅한다.
+- ?몃? ?대씪?댁뼵?멸? ?꾩쓽濡?蹂대궦 `X-User-Id` 媛숈? ?대? ?ㅻ뜑??Gateway?먯꽌 ?쒓굅?????ㅼ떆 ?ㅼ젙?쒕떎.
+- `user-service`??湲곗〈 JWT ?꾪꽣??Gateway ?꾪솚 ?④퀎?먯꽌 鍮꾪솢?깊솕?섍굅???대? ?ㅻ뜑 湲곕컲 ?몄쬆?쇰줈 ?泥댄븳??
+- 理쒖쥌 援ъ“?먯꽌???대? ?쒕퉬?ㅺ? ?몃? ?좏겙??吏곸젒 寃利앺븯吏 ?딅뒗??
+- 怨듦컻 API???뚯썝媛?? 濡쒓렇?? ?좏겙 ?щ컻湲됱? Gateway JWT 寃利앹쓣 嫄곗튂吏 ?딄퀬 ?쇱슦?낇븳??
+- 濡쒓렇?꾩썐, ???뺣낫 議고쉶, ???뺣낫 ?섏젙? Gateway?먯꽌 Access Token??寃利앺븳 ???쇱슦?낇븳??
 
-## 서킷브레이커 정책
+## ?쒗궥釉뚮젅?댁빱 ?뺤콉
 
-`user-service` 라우트에는 Resilience4j 기반 서킷브레이커를 적용한다.
+`user-service` ?쇱슦?몄뿉??Resilience4j 湲곕컲 ?쒗궥釉뚮젅?댁빱瑜??곸슜?쒕떎.
 
-초기 설정안:
+珥덇린 ?ㅼ젙??
 
-- 실패율 기준: 50%
-- 슬라이딩 윈도우 크기: 20
-- 최소 호출 수: 10
-- Open 상태 유지 시간: 10초
-- Half-open 허용 호출 수: 5
-- 느린 호출 기준: 2초
-- 느린 호출 비율 기준: 50%
+- ?ㅽ뙣??湲곗?: 50%
+- ?щ씪?대뵫 ?덈룄???ш린: 20
+- 理쒖냼 ?몄텧 ?? 10
+- Open ?곹깭 ?좎? ?쒓컙: 10珥?
+- Half-open ?덉슜 ?몄텧 ?? 5
+- ?먮┛ ?몄텧 湲곗?: 2珥?
+- ?먮┛ ?몄텧 鍮꾩쑉 湲곗?: 50%
 
-Fallback 응답:
+Fallback ?묐떟:
 
-- 인증/회원 API 장애 시 Gateway가 `503 SERVICE_UNAVAILABLE`을 반환한다.
-- 응답 바디는 공통 에러 포맷으로 맞춘다.
-- 장애 원인 상세는 외부에 노출하지 않는다.
+- ?몄쬆/?뚯썝 API ?μ븷 ??Gateway媛 `503 SERVICE_UNAVAILABLE`??諛섑솚?쒕떎.
+- ?묐떟 諛붾뵒??怨듯넻 ?먮윭 ?щ㎎?쇰줈 留욎텣??
+- ?μ븷 ?먯씤 ?곸꽭???몃????몄텧?섏? ?딅뒗??
 
-예상 에러 코드:
+?덉긽 ?먮윭 肄붾뱶:
 
 - `USER_SERVICE_UNAVAILABLE`
 - `GATEWAY_TIMEOUT`
 - `INVALID_TOKEN`
 - `EXPIRED_TOKEN`
 
-## Docker Compose 방향
+## Docker Compose 諛⑺뼢
 
-최종 노출 포트:
+理쒖쥌 ?몄텧 ?ы듃:
 
-- `nginx`: 호스트 `80`, 추후 `443`
-- `api-gateway`: Docker 내부 노출만 사용하거나 개발 편의를 위해 별도 포트 사용
-- `user-service`: `expose`만 사용하고 `ports`는 사용하지 않음
-- `mysql`: 로컬 개발 편의를 위해 `3307:3306` 유지 가능
-- `redis`: 로컬 개발 편의를 위해 `6379:6379` 유지 가능
+- `nginx`: ?몄뒪??`80`, 異뷀썑 `443`
+- `api-gateway`: Docker ?대? ?몄텧留??ъ슜?섍굅??媛쒕컻 ?몄쓽瑜??꾪빐 蹂꾨룄 ?ы듃 ?ъ슜
+- `user-service`: `expose`留??ъ슜?섍퀬 `ports`???ъ슜?섏? ?딆쓬
+- `mysql`: 濡쒖뺄 媛쒕컻 ?몄쓽瑜??꾪빐 `3307:3306` ?좎? 媛??
+- `redis`: 濡쒖뺄 媛쒕컻 ?몄쓽瑜??꾪빐 `6379:6379` ?좎? 媛??
 
-전환 계획:
+?꾪솚 怨꾪쉷:
 
-1. `api-gateway` 서비스를 Docker Compose에 추가한다.
-2. Nginx는 외부 `80` 포트를 유지한다.
-3. Nginx의 API 라우팅 대상을 `user-service`에서 `api-gateway`로 변경한다.
-4. `api-gateway`는 Docker 내부 네트워크 이름으로 `user-service:8080`에 접근한다.
-5. `user-service`는 외부 포트를 열지 않고 내부 네트워크에서만 접근한다.
+1. `api-gateway` ?쒕퉬?ㅻ? Docker Compose??異붽??쒕떎.
+2. Nginx???몃? `80` ?ы듃瑜??좎??쒕떎.
+3. Nginx??API ?쇱슦????곸쓣 `user-service`?먯꽌 `api-gateway`濡?蹂寃쏀븳??
+4. `api-gateway`??Docker ?대? ?ㅽ듃?뚰겕 ?대쫫?쇰줈 `user-service:8080`???묎렐?쒕떎.
+5. `user-service`???몃? ?ы듃瑜??댁? ?딄퀬 ?대? ?ㅽ듃?뚰겕?먯꽌留??묎렐?쒕떎.
 
-## 작업 계획
+## ?묒뾽 怨꾪쉷
 
-1. Spring Cloud Gateway 프로젝트 스캐폴딩
-2. Spring Boot 3.5.13 및 Spring Cloud 2025.0.x 호환성 확정
-3. Gateway 라우트 설정 추가
-4. JWT 검증 필터 구현
-5. 내부 전달 헤더 정리 필터 구현
-6. Resilience4j 서킷브레이커와 fallback 라우트 구현
-7. CORS 정책 추가
-8. Actuator 헬스 체크 추가
-9. Dockerfile 작성
-10. `infra/docker-compose.yml`에 `api-gateway` 서비스 추가
-11. Nginx API upstream을 `api-gateway`로 변경
-12. `user-service`의 외부 직접 접근 차단 상태 확인
-13. `user-service`의 Gateway 신뢰 방식 정리
-14. gRPC 포트가 외부에 노출되지 않는지 확인
-15. 회원가입, 로그인, 내 정보 조회 라우팅 테스트
-16. `user-service` 중단 시 fallback 응답 테스트
+1. Spring Cloud Gateway ?꾨줈?앺듃 ?ㅼ틦?대뵫
+2. Spring Boot 3.5.13 諛?Spring Cloud 2025.0.x ?명솚???뺤젙
+3. Gateway ?쇱슦???ㅼ젙 異붽?
+4. JWT 寃利??꾪꽣 援ы쁽
+5. ?대? ?꾨떖 ?ㅻ뜑 ?뺣━ ?꾪꽣 援ы쁽
+6. Resilience4j ?쒗궥釉뚮젅?댁빱? fallback ?쇱슦??援ы쁽
+7. CORS ?뺤콉 異붽?
+8. Actuator ?ъ뒪 泥댄겕 異붽?
+9. Dockerfile ?묒꽦
+10. `infra/docker-compose.yml`??`api-gateway` ?쒕퉬??異붽?
+11. Nginx API upstream??`api-gateway`濡?蹂寃?
+12. `user-service`???몃? 吏곸젒 ?묎렐 李⑤떒 ?곹깭 ?뺤씤
+13. `user-service`??Gateway ?좊ː 諛⑹떇 ?뺣━
+14. gRPC ?ы듃媛 ?몃????몄텧?섏? ?딅뒗吏 ?뺤씤
+15. ?뚯썝媛?? 濡쒓렇?? ???뺣낫 議고쉶 ?쇱슦???뚯뒪??
+16. `user-service` 以묐떒 ??fallback ?묐떟 ?뚯뒪??
 
-## 테스트 계획
+## ?뚯뒪??怨꾪쉷
 
-- 공개 API는 토큰 없이 Gateway를 통과해야 한다.
-- 보호 API는 토큰 없이 호출하면 Gateway에서 `401`을 반환해야 한다.
-- 보호 API는 유효한 Access Token이 있을 때 내부 서비스로 전달되어야 한다.
-- 외부에서 전달한 `X-User-Id`는 무시되고 Gateway가 새로 설정해야 한다.
-- `user-service` 장애 시 서킷브레이커 fallback이 동작해야 한다.
-- `user-service`를 직접 호스트 포트로 접근할 수 없어야 한다.
-- Nginx를 통해 들어온 API 요청만 `api-gateway`로 전달되어야 한다.
-- gRPC 포트는 호스트에 직접 노출되지 않아야 한다.
-- 서비스 간 사용자 조회는 REST `/internal/**`가 아니라 gRPC 계약으로 전환 가능해야 한다.
+- 怨듦컻 API???좏겙 ?놁씠 Gateway瑜??듦낵?댁빞 ?쒕떎.
+- 蹂댄샇 API???좏겙 ?놁씠 ?몄텧?섎㈃ Gateway?먯꽌 `401`??諛섑솚?댁빞 ?쒕떎.
+- 蹂댄샇 API???좏슚??Access Token???덉쓣 ???대? ?쒕퉬?ㅻ줈 ?꾨떖?섏뼱???쒕떎.
+- ?몃??먯꽌 ?꾨떖??`X-User-Id`??臾댁떆?섍퀬 Gateway媛 ?덈줈 ?ㅼ젙?댁빞 ?쒕떎.
+- `user-service` ?μ븷 ???쒗궥釉뚮젅?댁빱 fallback???숈옉?댁빞 ?쒕떎.
+- `user-service`瑜?吏곸젒 ?몄뒪???ы듃濡??묎렐?????놁뼱???쒕떎.
+- Nginx瑜??듯빐 ?ㅼ뼱??API ?붿껌留?`api-gateway`濡??꾨떖?섏뼱???쒕떎.
+- gRPC ?ы듃???몄뒪?몄뿉 吏곸젒 ?몄텧?섏? ?딆븘???쒕떎.
+- ?쒕퉬??媛??ъ슜??議고쉶??REST `/internal/**`媛 ?꾨땲??gRPC 怨꾩빟?쇰줈 ?꾪솚 媛?ν빐???쒕떎.
 
-## 1차 완료 기준
+## 1李??꾨즺 湲곗?
 
-- `api-gateway` 프로젝트가 생성되어 있다.
-- Nginx가 외부 네트워크 진입점으로 동작한다.
-- Gateway가 외부 API의 애플리케이션 진입점으로 동작한다.
-- JWT 검증이 Gateway에서 수행된다.
-- `user-service`는 Gateway를 통해서만 접근 가능하다.
-- `user-service` 라우트에 서킷브레이커가 적용되어 있다.
-- 서버 간 통신은 gRPC 기준으로 설계되어 있다.
-- Docker Compose로 전체 로컬 실행이 가능하다.
-- Swagger 또는 API 문서 접근 정책이 정리되어 있다.
+- `api-gateway` ?꾨줈?앺듃媛 ?앹꽦?섏뼱 ?덈떎.
+- Nginx媛 ?몃? ?ㅽ듃?뚰겕 吏꾩엯?먯쑝濡??숈옉?쒕떎.
+- Gateway媛 ?몃? API???좏뵆由ъ??댁뀡 吏꾩엯?먯쑝濡??숈옉?쒕떎.
+- JWT 寃利앹씠 Gateway?먯꽌 ?섑뻾?쒕떎.
+- `user-service`??Gateway瑜??듯빐?쒕쭔 ?묎렐 媛?ν븯??
+- `user-service` ?쇱슦?몄뿉 ?쒗궥釉뚮젅?댁빱媛 ?곸슜?섏뼱 ?덈떎.
+- ?쒕쾭 媛??듭떊? gRPC 湲곗??쇰줈 ?ㅺ퀎?섏뼱 ?덈떎.
+- Docker Compose濡??꾩껜 濡쒖뺄 ?ㅽ뻾??媛?ν븯??
+- Swagger ?먮뒗 API 臾몄꽌 ?묎렐 ?뺤콉???뺣━?섏뼱 ?덈떎.
+
