@@ -9,12 +9,21 @@ spring:
             - id: user-service-api
               uri: ${USER_SERVICE_URI:http://user-service:8080}
               predicates:
-                - Path=/api/**
+                - Path=/api/auth/**,/api/users/**
               filters:
                 - name: CircuitBreaker
                   args:
                     name: userServiceCircuitBreaker
                     fallbackUri: forward:/fallback/user-service
+            - id: training-service-api
+              uri: ${TRAINING_SERVICE_URI:http://training-service:8080}
+              predicates:
+                - Path=/api/trainings/**
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    name: trainingServiceCircuitBreaker
+                    fallbackUri: forward:/fallback/training-service
             - id: user-service-docs
               uri: ${USER_SERVICE_URI:http://user-service:8080}
               predicates:
@@ -65,9 +74,19 @@ resilience4j:
         permitted-number-of-calls-in-half-open-state: 5
         slow-call-duration-threshold: 2s
         slow-call-rate-threshold: 50
+      trainingServiceCircuitBreaker:
+        failure-rate-threshold: 50
+        sliding-window-size: 20
+        minimum-number-of-calls: 10
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 5
+        slow-call-duration-threshold: 2s
+        slow-call-rate-threshold: 50
   timelimiter:
     instances:
       userServiceCircuitBreaker:
+        timeout-duration: 3s
+      trainingServiceCircuitBreaker:
         timeout-duration: 3s
 
 app:

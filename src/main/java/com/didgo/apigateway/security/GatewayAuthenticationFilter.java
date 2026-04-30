@@ -24,7 +24,6 @@ public class GatewayAuthenticationFilter implements GlobalFilter, Ordered {
 
     private static final String BEARER_PREFIX = "Bearer ";
     private static final String USER_ID_HEADER = "X-User-Id";
-    private static final String USER_ROLE_HEADER = "X-User-Role";
     private static final String REQUEST_ID_HEADER = "X-Request-Id";
 
     private static final List<String> PUBLIC_PREFIXES = List.of(
@@ -64,7 +63,6 @@ public class GatewayAuthenticationFilter implements GlobalFilter, Ordered {
             ServerHttpRequest authenticatedRequest = sanitizedRequest.mutate()
                     .headers(headers -> headers.remove(HttpHeaders.AUTHORIZATION))
                     .header(USER_ID_HEADER, String.valueOf(userId))
-                    .header(USER_ROLE_HEADER, "USER")
                     .header(REQUEST_ID_HEADER, requestId(sanitizedRequest))
                     .build();
             return chain.filter(sanitizedExchange.mutate().request(authenticatedRequest).build());
@@ -82,7 +80,6 @@ public class GatewayAuthenticationFilter implements GlobalFilter, Ordered {
         return request.mutate()
                 .headers(headers -> {
                     headers.remove(USER_ID_HEADER);
-                    headers.remove(USER_ROLE_HEADER);
                     headers.remove(REQUEST_ID_HEADER);
                 })
                 .build();
