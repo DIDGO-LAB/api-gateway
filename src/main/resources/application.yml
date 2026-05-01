@@ -24,15 +24,22 @@ spring:
                   args:
                     name: trainingServiceCircuitBreaker
                     fallbackUri: forward:/fallback/training-service
-            - id: user-service-docs
+            - id: training-service-social-voice-ws
+              uri: ${TRAINING_SERVICE_WS_URI:ws://training-service:8080}
+              predicates:
+                - Path=/ws/trainings/social/voice
+            - id: user-service-openapi
               uri: ${USER_SERVICE_URI:http://user-service:8080}
               predicates:
-                - Path=/swagger-ui.html,/swagger-ui/**,/v3/api-docs/**
+                - Path=/user-service/v3/api-docs,/user-service/v3/api-docs/**
               filters:
-                - name: CircuitBreaker
-                  args:
-                    name: userServiceCircuitBreaker
-                    fallbackUri: forward:/fallback/user-service
+                - StripPrefix=1
+            - id: training-service-openapi
+              uri: ${TRAINING_SERVICE_URI:http://training-service:8080}
+              predicates:
+                - Path=/training-service/v3/api-docs,/training-service/v3/api-docs/**
+              filters:
+                - StripPrefix=1
           globalcors:
             cors-configurations:
               '[/**]':
@@ -62,6 +69,18 @@ management:
     health:
       probes:
         enabled: true
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    disable-swagger-default-url: true
+    urls:
+      - name: User Service API
+        url: /user-service/v3/api-docs
+      - name: Training Service API
+        url: /training-service/v3/api-docs/external-training
+      - name: Training Service Internal API
+        url: /training-service/v3/api-docs/internal-training
 
 resilience4j:
   circuitbreaker:

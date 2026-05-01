@@ -28,7 +28,13 @@ public class GatewayAuthenticationFilter implements GlobalFilter, Ordered {
 
     private static final List<String> PUBLIC_PREFIXES = List.of(
             "/swagger-ui",
-            "/v3/api-docs"
+            "/v3/api-docs",
+            "/webjars",
+            "/user-service/v3/api-docs",
+            "/training-service/v3/api-docs"
+    );
+    private static final List<String> PUBLIC_EXACT_PATHS = List.of(
+            "/ws/trainings/social/voice"
     );
 
     private final JwtTokenValidator jwtTokenValidator;
@@ -45,7 +51,7 @@ public class GatewayAuthenticationFilter implements GlobalFilter, Ordered {
         ServerHttpRequest sanitizedRequest = removeClientControlledHeaders(exchange.getRequest());
         ServerWebExchange sanitizedExchange = exchange.mutate().request(sanitizedRequest).build();
 
-        // 회원가입, 로그인, 토큰 재발급, 문서 경로는 Gateway 인증 없이 그대로 전달한다.
+        // 회원가입, 로그인, 토큰 재발급, 문서 경로와 단기 토큰 기반 WebSocket은 Gateway 인증 없이 전달한다.
         if (isPublicRequest(sanitizedRequest)) {
             return chain.filter(sanitizedExchange);
         }
@@ -92,6 +98,9 @@ public class GatewayAuthenticationFilter implements GlobalFilter, Ordered {
         }
 
         String path = request.getPath().pathWithinApplication().value();
+        if (PUBLIC_EXACT_PATHS.contains(path)) {
+            return true;
+        }
         if (request.getMethod() == HttpMethod.POST
                 && ("/api/auth/signup".equals(path)
                 || "/api/auth/login".equals(path)
