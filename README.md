@@ -14,7 +14,7 @@
 현재 외부 요청 흐름은 다음과 같다.
 
 ```text
-Client -> Nginx -> api-gateway -> user-service
+Client -> Nginx -> api-gateway -> user-service | training-service
 ```
 
 ## 기술 스택
@@ -25,6 +25,7 @@ Client -> Nginx -> api-gateway -> user-service
 - Spring Security
 - Resilience4j
 - Actuator
+- Springdoc OpenAPI
 - JJWT
 - Docker
 
@@ -36,10 +37,13 @@ Client -> Nginx -> api-gateway -> user-service
 - `POST /api/auth/reissue`
 - `GET /api/users/me`
 - `PATCH /api/users/me`
-- `/swagger-ui/**`
-- `/v3/api-docs/**`
+- `/api/trainings/**`
+- `WS /ws/trainings/social/voice`
+- `/swagger-ui.html`, `/swagger-ui/**`
+- `/user-service/v3/api-docs`
+- `/training-service/v3/api-docs/**`
 
-현재 1차 라우팅 대상은 `user-service`다.
+현재 라우팅 대상은 `user-service`와 `training-service`다.
 
 ## 인증 정책
 
@@ -49,14 +53,27 @@ Client -> Nginx -> api-gateway -> user-service
 - `POST /api/auth/login`
 - `POST /api/auth/reissue`
 - Swagger / OpenAPI 문서 경로
+- `WS /ws/trainings/social/voice`
 
 인증 필요 API:
 
 - `POST /api/auth/logout`
 - `GET /api/users/me`
 - `PATCH /api/users/me`
+- `/api/trainings/**`
 
 보호 API 요청은 Gateway에서 JWT를 검증한 뒤 `X-User-Id` 같은 내부 헤더로 변환해 하위 서비스에 전달한다.
+사회성 음성 WebSocket은 브라우저가 일반 HTTP 인증 헤더를 넣기 어렵기 때문에 Gateway JWT 인증을 우회하고, `training-service`가 세션 준비 API에서 발급한 단기 `connectionToken`으로 검증한다.
+
+## Swagger / OpenAPI
+
+Gateway 기준 Swagger UI는 `/swagger-ui.html`에서 확인한다.
+
+Swagger UI는 Gateway가 직접 제공하고, 하위 서비스 OpenAPI 문서는 다음 경로로 프록시한다.
+
+- `User Service API`: `/user-service/v3/api-docs`
+- `Training Service API`: `/training-service/v3/api-docs/external-training`
+- `Training Service Internal API`: `/training-service/v3/api-docs/internal-training`
 
 ## 실행 방법
 
@@ -72,6 +89,8 @@ JAVA_HOME=/path/to/java21 ./mvnw test
 JWT_SECRET=your-secret \
 JWT_ISSUER=user-service \
 USER_SERVICE_URI=http://localhost:8080 \
+TRAINING_SERVICE_URI=http://localhost:8081 \
+TRAINING_SERVICE_WS_URI=ws://localhost:8081 \
 ./mvnw spring-boot:run
 ```
 
@@ -88,6 +107,8 @@ docker build -t didgo-api-gateway:latest .
 - `JWT_SECRET`: JWT 서명 검증 키
 - `JWT_ISSUER`: 허용할 토큰 issuer
 - `USER_SERVICE_URI`: 라우팅 대상 user-service 주소
+- `TRAINING_SERVICE_URI`: 라우팅 대상 training-service HTTP 주소
+- `TRAINING_SERVICE_WS_URI`: 라우팅 대상 training-service WebSocket 주소
 - `CORS_ALLOWED_ORIGINS`: 허용할 CORS origin 목록
 - `SERVER_PORT`: Gateway 포트
 
@@ -97,6 +118,8 @@ docker build -t didgo-api-gateway:latest .
 
 - Spring Context 로딩
 - Nginx -> api-gateway -> user-service 라우팅
+- api-gateway -> training-service 라우팅
+- 사회성 음성 WebSocket 인증 예외 및 내부 헤더 제거
 - 공개 API 통과
 - 보호 API 무토큰 차단
 - 보호 API 유효 토큰 통과
