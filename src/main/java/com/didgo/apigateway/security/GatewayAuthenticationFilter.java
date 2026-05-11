@@ -29,7 +29,8 @@ public class GatewayAuthenticationFilter implements GlobalFilter, Ordered {
     private static final List<String> PUBLIC_PREFIXES = List.of(
             "/trainings/",
             "/swagger-ui",
-            "/v3/api-docs"
+            "/v3/api-docs",
+            "/ws/trainings/social/voice"
     );
 
     private final JwtTokenValidator jwtTokenValidator;

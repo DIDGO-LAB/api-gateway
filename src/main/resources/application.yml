@@ -33,6 +33,10 @@ spring:
                   args:
                     name: trainingServiceCircuitBreaker
                     fallbackUri: forward:/fallback/training-service
+            - id: training-service-websocket
+              uri: ${TRAINING_SERVICE_WS_URI:ws://training-service:8080}
+              predicates:
+                - Path=/ws/trainings/**
             - id: user-service-docs
               uri: ${USER_SERVICE_URI:http://user-service:8080}
               predicates:
