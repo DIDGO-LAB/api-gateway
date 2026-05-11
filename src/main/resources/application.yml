@@ -24,6 +24,15 @@ spring:
                   args:
                     name: trainingServiceCircuitBreaker
                     fallbackUri: forward:/fallback/training-service
+            - id: training-service-assets
+              uri: ${TRAINING_SERVICE_URI:http://training-service:8080}
+              predicates:
+                - Path=/trainings/**
+              filters:
+                - name: CircuitBreaker
+                  args:
+                    name: trainingServiceCircuitBreaker
+                    fallbackUri: forward:/fallback/training-service
             - id: user-service-docs
               uri: ${USER_SERVICE_URI:http://user-service:8080}
               predicates:

@@ -27,6 +27,7 @@ public class GatewayAuthenticationFilter implements GlobalFilter, Ordered {
     private static final String REQUEST_ID_HEADER = "X-Request-Id";
 
     private static final List<String> PUBLIC_PREFIXES = List.of(
+            "/trainings/",
             "/swagger-ui",
             "/v3/api-docs"
     );
