@@ -93,14 +93,14 @@ resilience4j:
         minimum-number-of-calls: 10
         wait-duration-in-open-state: 10s
         permitted-number-of-calls-in-half-open-state: 5
-        slow-call-duration-threshold: 2s
+        slow-call-duration-threshold: 60s
         slow-call-rate-threshold: 50
   timelimiter:
     instances:
       userServiceCircuitBreaker:
         timeout-duration: 3s
       trainingServiceCircuitBreaker:
-        timeout-duration: 3s
+        timeout-duration: 75s
 
 app:
   jwt:

@@ -11,6 +11,7 @@ import org.springframework.context.annotation.Configuration;
 public class GatewayResilienceConfig {
 
     private static final String USER_SERVICE_CIRCUIT_BREAKER = "userServiceCircuitBreaker";
+    private static final String TRAINING_SERVICE_CIRCUIT_BREAKER = "trainingServiceCircuitBreaker";
 
     @Bean
     public Customizer<ReactiveResilience4JCircuitBreakerFactory> userServiceCircuitBreakerCustomizer() {
@@ -20,6 +21,16 @@ public class GatewayResilienceConfig {
                         .timeoutDuration(Duration.ofSeconds(3))
                         .build()),
                 USER_SERVICE_CIRCUIT_BREAKER
+        );
+    }
+
+    @Bean
+    public Customizer<ReactiveResilience4JCircuitBreakerFactory> trainingServiceCircuitBreakerCustomizer() {
+        return factory -> factory.configure(
+                builder -> builder.timeLimiterConfig(TimeLimiterConfig.custom()
+                        .timeoutDuration(Duration.ofSeconds(75))
+                        .build()),
+                TRAINING_SERVICE_CIRCUIT_BREAKER
         );
     }
 }
